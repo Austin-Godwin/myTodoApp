@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:todo/widget/todoClass.dart';
 
 class MyTodoList extends StatefulWidget {
   const MyTodoList({Key? key}) : super(key: key);
@@ -9,8 +10,7 @@ class MyTodoList extends StatefulWidget {
 }
 
 class _MyTodoListState extends State<MyTodoList> {
-  final _todoList = <String>[];
-  List<bool> checkBoxesCheckedStates = [false];
+  final _todoList = <Todo>[];
   final TextEditingController _textController = TextEditingController();
 
   DateTime _dateTime = DateTime(
@@ -20,13 +20,14 @@ class _MyTodoListState extends State<MyTodoList> {
   );
 
   void _addTodoItem(String title) {
+    final todo = new Todo(name: title);
     setState(() {
-      _todoList.add(title);
+      _todoList.add(todo);
     });
     _textController.clear();
   }
 
-  bool _isChecked = false;
+  // bool _isChecked = false;
 
   TextStyle? _getTextStyle(bool checked) {
 
@@ -86,16 +87,27 @@ class _MyTodoListState extends State<MyTodoList> {
 
   List<Widget> _getItems() {
     final _todoWidgets = <Widget>[];
-    for (String title in _todoList) {
+    for (Todo todo in _todoList) {
       _todoWidgets.add(
-        _buildTodoItem(title, _dateTime, (bool) {
+        _buildTodoItem(todo.name, _dateTime, (bool) {
           setState(() {
-                _isChecked = bool;
+                todo.isChecked = bool;
               });
-        }, _isChecked)
+        }, todo.isChecked)
       );
+      if (todo.isChecked == true) {
+        _todoWidgets.remove(_removeItems(todo.name));
+      }
     }
     return _todoWidgets;
+  }
+
+  List<Widget> _removeItems(String index) {
+    final _removeTodo = <Widget>[];
+    for (Todo todo in _todoList) {
+      if (todo.isChecked) _removeTodo.remove(index);
+    }
+    return _removeTodo;
   }
 
   @override

@@ -1,9 +1,10 @@
 
 class Todo {
-  Todo ({required this.name, required this.check});
-  final String name;
-  bool check;
 
+  final String name;
+  bool isChecked;
+  Todo ({required this.name, this.isChecked = false});
+  
 }
 
 
