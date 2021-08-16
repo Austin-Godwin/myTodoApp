@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:todo/widget/todoClass.dart';
@@ -19,6 +21,12 @@ class _MyTodoListState extends State<MyTodoList> {
     DateTime.now().year,
   );
 
+  void deleteTodo(Todo arg) {
+    setState(() {
+      _todoList.removeWhere((todo) => todo.name == arg.name);
+    });
+  }
+
   void _addTodoItem(String title) {
     final todo = new Todo(name: title);
     setState(() {
@@ -30,19 +38,18 @@ class _MyTodoListState extends State<MyTodoList> {
   // bool _isChecked = false;
 
   TextStyle? _getTextStyle(bool checked) {
-
-    if(!checked) {
+    if (!checked) {
       return TextStyle(fontSize: 20.0);
     }
     return TextStyle(
         fontSize: 20.0,
-      color: Colors.black54,
-      decoration: TextDecoration.lineThrough,
-      fontStyle: FontStyle.italic
-    );
+        color: Colors.black54,
+        decoration: TextDecoration.lineThrough,
+        fontStyle: FontStyle.italic);
   }
 
-  Widget _buildTodoItem(String title, DateTime subtitle, void onChanged(bool), bool value) {
+  Widget _buildTodoItem(
+      String title, DateTime subtitle, void onChanged(bool), bool value) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Card(
@@ -86,20 +93,24 @@ class _MyTodoListState extends State<MyTodoList> {
   }
 
   List<Widget> _getItems() {
-    final _todoWidgets = <Widget>[];
-    for (Todo todo in _todoList) {
-      _todoWidgets.add(
-        _buildTodoItem(todo.name, _dateTime, (bool) {
-          setState(() {
-                todo.isChecked = bool;
-              });
-        }, todo.isChecked)
-      );
-      if (todo.isChecked == true) {
-        _todoWidgets.remove(_removeItems(todo.name));
-      }
-    }
-    return _todoWidgets;
+    return _todoList.map((todo) {
+      return _buildTodoItem(todo.name, _dateTime, (bool) {
+        setState(() {
+          todo.isChecked = bool;
+
+          if (todo.isChecked) {
+            todo.clock = Timer(Duration(seconds: 3), () {
+              deleteTodo(todo);
+            });
+
+          } else {
+            if (todo.clock != null) {
+              todo.clock!.cancel();
+            }
+          }
+        });
+      }, todo.isChecked);
+    }).toList();
   }
 
   List<Widget> _removeItems(String index) {

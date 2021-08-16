@@ -1,10 +1,8 @@
+import 'dart:async';
 
 class Todo {
-
   final String name;
   bool isChecked;
-  Todo ({required this.name, this.isChecked = false});
-  
+  Timer? clock;
+  Todo({required this.name, this.isChecked = false, this.clock});
 }
-
-
