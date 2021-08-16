@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:todo/todo_model.dart';
 
 class MyTodoList extends StatefulWidget {
   const MyTodoList({Key? key}) : super(key: key);
@@ -9,7 +10,7 @@ class MyTodoList extends StatefulWidget {
 }
 
 class _MyTodoListState extends State<MyTodoList> {
-  final _todoList = <String>[];
+  final _todoList = <Todo>[];
   List<bool> checkBoxesCheckedStates = [false];
   final TextEditingController _textController = TextEditingController();
 
@@ -20,8 +21,10 @@ class _MyTodoListState extends State<MyTodoList> {
   );
 
   void _addTodoItem(String title) {
+    final todo = new Todo(title: title);
+
     setState(() {
-      _todoList.add(title);
+      _todoList.add(todo);
     });
     _textController.clear();
   }
@@ -29,19 +32,18 @@ class _MyTodoListState extends State<MyTodoList> {
   bool _isChecked = false;
 
   TextStyle? _getTextStyle(bool checked) {
-
-    if(!checked) {
+    if (!checked) {
       return TextStyle(fontSize: 20.0);
     }
     return TextStyle(
         fontSize: 20.0,
-      color: Colors.black54,
-      decoration: TextDecoration.lineThrough,
-      fontStyle: FontStyle.italic
-    );
+        color: Colors.black54,
+        decoration: TextDecoration.lineThrough,
+        fontStyle: FontStyle.italic);
   }
 
-  Widget _buildTodoItem(String title, DateTime subtitle, void onChanged(bool), bool value) {
+  Widget _buildTodoItem(
+      String title, DateTime subtitle, void onChanged(bool), bool value) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Card(
@@ -86,14 +88,12 @@ class _MyTodoListState extends State<MyTodoList> {
 
   List<Widget> _getItems() {
     final _todoWidgets = <Widget>[];
-    for (String title in _todoList) {
-      _todoWidgets.add(
-        _buildTodoItem(title, _dateTime, (bool) {
-          setState(() {
-                _isChecked = bool;
-              });
-        }, _isChecked)
-      );
+    for (Todo todo in _todoList) {
+      _todoWidgets.add(_buildTodoItem(todo.title, _dateTime, (bool) {
+        setState(() {
+          todo.isComplete = bool;
+        });
+      }, todo.isComplete));
     }
     return _todoWidgets;
   }
