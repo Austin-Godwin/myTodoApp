@@ -1,6 +1,10 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:todo/widget/todoClass.dart';
+// import 'package:firebase_core/firebase_core.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MyTodoList extends StatefulWidget {
   const MyTodoList({Key? key}) : super(key: key);
@@ -12,12 +16,28 @@ class MyTodoList extends StatefulWidget {
 class _MyTodoListState extends State<MyTodoList> {
   final _todoList = <Todo>[];
   final TextEditingController _textController = TextEditingController();
+  final TextEditingController _timeController = TextEditingController();
 
-  DateTime _dateTime = DateTime(
-    DateTime.now().day,
-    DateTime.now().month,
-    DateTime.now().year,
-  );
+  // final firestore = FirebaseFirestore.instance;
+  // CollectionReference messages = FirebaseFirestore.instance.collection('messages');
+  //
+  // Future<void> addMessages() async{
+  //   // return messages.add(data);
+  // }
+
+  // DateTime _dateTime = DateTime.now();
+  String getDate() {
+    final dateFormat = DateFormat("EEEE, MMMM d");
+    final date = dateFormat.format(DateTime.now());
+
+    return date;
+  }
+
+  void _deleteTodo(Todo arg) {
+    setState(() {
+      _todoList.removeWhere((todo) => todo.name == arg.name);
+    });
+  }
 
   void _addTodoItem(String title) {
     final todo = new Todo(name: title);
@@ -26,7 +46,6 @@ class _MyTodoListState extends State<MyTodoList> {
     });
     _textController.clear();
   }
-
   // bool _isChecked = false;
 
   TextStyle? _getTextStyle(bool checked) {
@@ -36,19 +55,32 @@ class _MyTodoListState extends State<MyTodoList> {
     }
     return TextStyle(
         fontSize: 20.0,
-      color: Colors.black54,
+      color: Colors.red,
       decoration: TextDecoration.lineThrough,
       fontStyle: FontStyle.italic
     );
   }
 
-  Widget _buildTodoItem(String title, DateTime subtitle, void onChanged(bool), bool value) {
+  // Widget _dateTimeToText(bool value) {
+  //   final date = Todo(name: "");
+  //   final myTime = date.time;
+  //   return Row(
+  //     children: [
+  //       Text(myTime, style: _getTextStyle(value)?.copyWith(fontSize: 15.0),),
+  //       SizedBox(width: 20.0,),
+  //       // Text(myTime.toString(), style: _getTextStyle(value)?.copyWith(fontSize: 15.0),),
+  //   SizedBox(width: 20.0,)
+  //     ],
+  //   );
+  // }
+
+  Widget _buildTodoItem(String title, Widget time, void onChanged(bool), bool value) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Card(
         child: CheckboxListTile(
           title: Text(title, style: _getTextStyle(value)),
-          subtitle: Text("$subtitle"),
+          subtitle: time,
           onChanged: onChanged,
           value: value,
         ),
@@ -57,14 +89,46 @@ class _MyTodoListState extends State<MyTodoList> {
   }
 
   Future<AlertDialog> _displayDialog(BuildContext context) async {
+    final _width = MediaQuery.of(context).size.width;
+    final _height = MediaQuery.of(context).size.height;
     return await showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text("Add a task to your list"),
-            content: TextField(
-              controller: _textController,
-              decoration: const InputDecoration(hintText: "Enter Task Here"),
+            title: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                const Text("What do you need to do today?", style: TextStyle(fontSize: 20.0),),
+                const Text("Add your task", style: TextStyle(fontSize: 20.0),),
+              ],
+            ),
+            content: Container(
+              constraints: BoxConstraints(maxHeight: 150),
+              child: SingleChildScrollView(
+                physics: BouncingScrollPhysics(),
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: _textController,
+                      decoration: const InputDecoration(hintText: "Enter Task Here"),
+                      textAlignVertical: TextAlignVertical.center,
+                    ),
+                    SizedBox(height: 10.0,),
+                    InkWell(
+                      child: Container(
+                        margin: EdgeInsets.only(top: 25.0),
+                        decoration: BoxDecoration(color: Colors.green[200]),
+                        alignment: Alignment.center,
+                        width: _width / 3,
+                        height: _height / 15,
+                        child: TextField(
+                          decoration: InputDecoration(border: InputBorder.none),
+                        ),
+                      ),
+                    )
+                  ],
+                ),
+              ),
             ),
             actions: [
               TextButton(
@@ -79,35 +143,42 @@ class _MyTodoListState extends State<MyTodoList> {
                   Navigator.of(context).pop();
                 },
                 child: const Text('CANCEL'),
-              ),
+              )
             ],
           );
         });
   }
 
   List<Widget> _getItems() {
-    final _todoWidgets = <Widget>[];
-    for (Todo todo in _todoList) {
-      _todoWidgets.add(
-        _buildTodoItem(todo.name, _dateTime, (bool) {
-          setState(() {
-                todo.isChecked = bool;
-              });
-        }, todo.isChecked)
-      );
-      if (todo.isChecked == true) {
-        _todoWidgets.remove(_removeItems(todo.name));
-      }
-    }
-    return _todoWidgets;
+    return _todoList.map((todo) {
+      return _buildTodoItem(todo.name, todo.time, (bool) {
+        setState(() {
+          todo.isChecked = bool;
+          if (todo.isChecked) {
+            todo.clock = Timer(Duration(seconds: 3), () {
+              _deleteTodo(todo);
+            });
+          } else {
+            if (todo.clock != null) {
+              todo.clock!.cancel();
+            }
+          }
+        });
+      }, todo.isChecked);
+    }).toList();
   }
 
-  List<Widget> _removeItems(String index) {
-    final _removeTodo = <Widget>[];
-    for (Todo todo in _todoList) {
-      if (todo.isChecked) _removeTodo.remove(index);
-    }
-    return _removeTodo;
+  // List<Widget> _removeItems(String index) {
+  //   final _removeTodo = <Widget>[];
+  //   for (Todo todo in _todoList) {
+  //     if (todo.isChecked) _removeTodo.remove(index);
+  //   }
+  //   return _removeTodo;
+  // }
+
+  @override
+  void initState() {
+    super.initState();
   }
 
   @override
@@ -137,13 +208,14 @@ class _MyTodoListState extends State<MyTodoList> {
                                         ?.copyWith(color: Colors.black54))),
                           ),
                           Expanded(
+                            flex: 2,
                             child: Container(
                               // color: Colors.white54,
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
                                   Text(
-                                    "Monday, March 12",
+                                    getDate(),
                                     style: TextStyle(
                                         color: Colors.black54, fontSize: 18.0),
                                   ),
@@ -152,7 +224,7 @@ class _MyTodoListState extends State<MyTodoList> {
                                   ),
                                   Icon(
                                     CupertinoIcons.calendar_today,
-                                    color: Colors.black54,
+                                    color: Colors.green[600],
                                   ),
                                 ],
                               ),
